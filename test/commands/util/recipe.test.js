@@ -166,7 +166,7 @@ describe("rp command", () => {
         expect(embed.description).toBe(
             "**Steel Ingot** makes **Steel Plate** — Forge Hammer • 16 EU/t • 2.8s from **Steel Ingot (3)**\n_use 1 of 1 • expert mode_"
         );
-        expect(embed.footer.text).toBe("NomiCodex • expert mode");
+        expect(embed.footer.text).toBe("NomiFactory CEu 1.7.7 • expert mode");
     });
 
     test("paginates and opens cards with the existing picker", async () => {
@@ -179,6 +179,7 @@ describe("rp command", () => {
             "`11` Blast Furnace • 120 EU/t • 40s (MV) • 1,000K • cleanroom • also Alloy Blast Smelter\n  from **Steel Dust (11)** → **Steel Ingot (1)**"
         );
         expect(embed.description).toContain("page 2 of 2 (12 recipes)");
+        expect(embed.footer.text).toBe("NomiFactory CEu 1.7.7 • normal mode ⟨rp:steel|p2⟩");
 
         const [row, nav] = out.components.map(component => component.toJSON().components);
         expect(row.map(button => button.label)).toEqual(["11", "12"]);
@@ -192,15 +193,23 @@ describe("rp command", () => {
         expect(shown.deferred).toBe(true);
         expect(getParams("/shot").at(-1).r).toBe("26");
         expect(Util.first(shown.output.embeds).description).toContain("Steel Dust (11)");
+        expect(Util.first(shown.output.embeds).footer.text).toBe("NomiFactory CEu 1.7.7 • normal mode ⟨rp:steel|r11⟩");
 
         const back = Util.first(Util.first(shown.output.components).toJSON().components);
         const list = await press(back.custom_id);
         expect(Util.first(list.output.embeds).description).toBe(embed.description);
+        expect(Util.first(list.output.embeds).footer.text).toBe(embed.footer.text);
         expect(
             Util.first(list.output.components)
                 .toJSON()
                 .components.map(button => button.label)
         ).toEqual(["11", "12"]);
+
+        const prev = nav.find(button => button.custom_id.startsWith("page:prev:"));
+        const firstPage = await press(prev.custom_id);
+        expect(Util.first(firstPage.output.embeds).footer.text).toBe(
+            "NomiFactory CEu 1.7.7 • normal mode ⟨rp:steel|p1⟩"
+        );
     });
 
     test("uses the linked hot ingot card and keeps the recipe text if the image fails", async () => {

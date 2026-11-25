@@ -20,6 +20,7 @@ class RecipeView {
     static cardTimeout = 11 / Util.durationSeconds.milli;
     static color = 0xa78bfa;
     static sourceName = "NomiCodex";
+    static packVersion = "NomiFactory CEu 1.7.7";
 
     static notice(description, footer = RecipeView.sourceName) {
         return { embeds: [RecipeView._createEmbed(footer).setDescription(description)] };
@@ -60,7 +61,7 @@ class RecipeView {
         this.theme = options.light ? "light" : null;
 
         this.label = this.uses ? "Use" : "Recipe";
-        this.footer = `${RecipeView.sourceName} • ${this.mode} mode`;
+        this.footer = `${RecipeView.packVersion} • ${this.mode} mode`;
     }
 
     async reply(ctx) {
@@ -208,6 +209,19 @@ class RecipeView {
         return bold(this.uses ? `Uses: ${name}${machine}` : `${name}${machine}`);
     }
 
+    _navFooter(kind, number) {
+        if (this.uses) {
+            return this.footer;
+        }
+
+        const start = `${this.footer} ⟨rp:`,
+            end = `|${kind}${number}⟩`;
+        const limit = DiscordUtil.embedLimits.footer - start.length - end.length;
+        const query = this.query.replace(/[|⟨⟩\r\n]/g, " ").trim();
+
+        return `${start}${Util.trimString(query, limit, null, { tight: true })}${end}`;
+    }
+
     _withDescription(content, description, footer, limits) {
         const embed = RecipeView._createEmbed(footer);
         const payload = { content, embeds: [embed] };
@@ -240,7 +254,12 @@ class RecipeView {
         }
 
         lines.push("", italic("Select a number below to view it."));
-        return this._withDescription(this._header(item.name, true), lines.join("\n"), this.footer, limits);
+        return this._withDescription(
+            this._header(item.name, true),
+            lines.join("\n"),
+            this._navFooter("p", info.page),
+            limits
+        );
     }
 
     async _renderItem(item, result, count, limits) {
@@ -253,7 +272,7 @@ class RecipeView {
         const machine = this.data.machineFilter ? ` (${this._text(this.data.machineFilter, 60)})` : "";
         const position = italic(`${this.label.toLowerCase()} ${number} of ${count}${machine} • ${this.mode} mode`);
         const description = `${name}${separator}${this._describeEntry(entry)}\n${position}`;
-        const payload = this._withDescription(content, description, this.footer, limits);
+        const payload = this._withDescription(content, description, this._navFooter("r", number), limits);
 
         try {
             const url = await this.source.renderCard(
